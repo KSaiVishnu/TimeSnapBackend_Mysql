@@ -28,6 +28,3 @@ packages/
 appsettings.json
 appsettings.Development.json
 secrets.json
-
-# Optional: Ignore Entity Framework migrations if frequently regenerated
-Migrations/
