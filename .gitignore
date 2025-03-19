@@ -1,0 +1,33 @@
+#.env
+#secrets.txt
+#appsettings.json
+#appsettings.Development.json
+#Migrations/
+
+
+
+# Ignore Visual Studio-specific files
+.vs/
+*.user
+*.suo
+*.cache
+*.dbmdl
+*.VC.db
+
+# Ignore build output
+bin/
+obj/
+
+# Ignore NuGet dependencies
+packages/
+
+# Ignore logs
+*.log
+
+# Ignore user secrets & sensitive configs
+appsettings.json
+appsettings.Development.json
+secrets.json
+
+# Optional: Ignore Entity Framework migrations if frequently regenerated
+Migrations/
