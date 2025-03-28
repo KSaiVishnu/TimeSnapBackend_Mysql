@@ -61,10 +61,3 @@ namespace TimeSnapBackend_MySql
         }
     }
 }
-
-
-
-
-
-
-

@@ -1,5 +1,8 @@
 ﻿using TimeSnapBackend_MySql.Models;
 using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.SwaggerGen;
+using Swashbuckle.AspNetCore.Annotations;
+using Microsoft.AspNetCore.Http;
 
 namespace TimeSnapBackend_MySql.Extensions
 {
@@ -11,6 +14,9 @@ namespace TimeSnapBackend_MySql.Extensions
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(options =>
             {
+                options.EnableAnnotations(); // ✅ Enable Swagger annotations
+                options.SwaggerDoc("v1", new OpenApiInfo { Title = "TimeSnap API", Version = "v1" });
+
                 options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Name = "Authorization",
@@ -18,8 +24,9 @@ namespace TimeSnapBackend_MySql.Extensions
                     Scheme = "Bearer",
                     BearerFormat = "JWT",
                     In = ParameterLocation.Header,
-                    Description = "Fill in the JWT token",
+                    Description = "Enter JWT token in the field below",
                 });
+
                 options.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
                     {
@@ -28,20 +35,20 @@ namespace TimeSnapBackend_MySql.Extensions
                             Reference = new OpenApiReference
                             {
                                 Type = ReferenceType.SecurityScheme,
-                                Id="Bearer"
+                                Id = "Bearer"
                             }
                         },
-                        new List<String>()
+                        new List<string>()
                     }
                 });
+
+                options.OperationFilter<FileUploadOperationFilter>();
             });
             return services;
         }
 
-
         public static WebApplication ConfigureSwaggerExplorer(this WebApplication app)
         {
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -49,6 +56,40 @@ namespace TimeSnapBackend_MySql.Extensions
             }
             return app;
         }
+    }
 
+    // ✅ Custom Operation Filter to Handle File Uploads in Swagger
+    public class FileUploadOperationFilter : IOperationFilter
+    {
+        public void Apply(OpenApiOperation operation, OperationFilterContext context)
+        {
+            var fileParams = context.ApiDescription.ParameterDescriptions
+                .Where(p => p.Type == typeof(IFormFile));
+
+            if (fileParams.Any())
+            {
+                operation.RequestBody = new OpenApiRequestBody
+                {
+                    Content = new Dictionary<string, OpenApiMediaType>
+                    {
+                        ["multipart/form-data"] = new OpenApiMediaType
+                        {
+                            Schema = new OpenApiSchema
+                            {
+                                Type = "object",
+                                Properties = new Dictionary<string, OpenApiSchema>
+                                {
+                                    ["file"] = new OpenApiSchema
+                                    {
+                                        Type = "string",
+                                        Format = "binary"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+            }
+        }
     }
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TimeSnapBackend_MySql.Models;
 
@@ -11,9 +12,11 @@ using TimeSnapBackend_MySql.Models;
 namespace TimeSnapBackend_MySql.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250327062408_UpdateTasksSchema1")]
+    partial class UpdateTasksSchema1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -246,18 +249,14 @@ namespace TimeSnapBackend_MySql.Migrations
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("DATETIME(6)");
 
-                    b.Property<string>("TaskId")
-                        .IsRequired()
-                        .HasColumnType("VARCHAR(50)");
+                    b.Property<sbyte>("Status")
+                        .HasColumnType("TINYINT");
 
                     b.Property<string>("TaskName")
                         .IsRequired()
                         .HasColumnType("VARCHAR(255)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("TaskId")
-                        .IsUnique();
 
                     b.ToTable("Tasks");
                 });
@@ -270,6 +269,9 @@ namespace TimeSnapBackend_MySql.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AppUserId")
+                        .HasColumnType("varchar(255)");
+
                     b.Property<DateTime>("Date")
                         .HasColumnType("DATETIME(6)");
 
@@ -280,14 +282,15 @@ namespace TimeSnapBackend_MySql.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("TaskId")
-                        .IsRequired()
-                        .HasColumnType("VARCHAR(50)");
+                    b.Property<int>("TaskId")
+                        .HasColumnType("int");
 
                     b.Property<double>("TotalMinutes")
                         .HasColumnType("DOUBLE");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AppUserId");
 
                     b.HasIndex("EmpId");
 
@@ -338,9 +341,8 @@ namespace TimeSnapBackend_MySql.Migrations
                     b.Property<sbyte>("Status")
                         .HasColumnType("TINYINT");
 
-                    b.Property<string>("TaskId")
-                        .IsRequired()
-                        .HasColumnType("VARCHAR(50)");
+                    b.Property<int>("TaskId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -404,8 +406,12 @@ namespace TimeSnapBackend_MySql.Migrations
 
             modelBuilder.Entity("TimeSnapBackend_MySql.Models.Timesheet", b =>
                 {
-                    b.HasOne("TimeSnapBackend_MySql.Models.AppUser", "Employee")
+                    b.HasOne("TimeSnapBackend_MySql.Models.AppUser", null)
                         .WithMany("Timesheets")
+                        .HasForeignKey("AppUserId");
+
+                    b.HasOne("TimeSnapBackend_MySql.Models.AppUser", "Employee")
+                        .WithMany()
                         .HasForeignKey("EmpId")
                         .HasPrincipalKey("EmpId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -414,7 +420,6 @@ namespace TimeSnapBackend_MySql.Migrations
                     b.HasOne("TimeSnapBackend_MySql.Models.TaskModel", "Task")
                         .WithMany()
                         .HasForeignKey("TaskId")
-                        .HasPrincipalKey("TaskId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -435,7 +440,6 @@ namespace TimeSnapBackend_MySql.Migrations
                     b.HasOne("TimeSnapBackend_MySql.Models.TaskModel", "Task")
                         .WithMany("UserTasks")
                         .HasForeignKey("TaskId")
-                        .HasPrincipalKey("TaskId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

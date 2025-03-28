@@ -9,12 +9,12 @@ namespace TimeSnapBackend_MySql.Extensions
             this WebApplication app,
             IConfiguration config)
         {
-            app.UseCors("AllowAll"); // ✅ Apply CORS globally
+            app.UseCors("AllowAll"); // Apply CORS globally
 
-            // ✅ Set COOP & COEP headers for Google Login & postMessage support
+            // Set COOP & COEP headers for Google Login & postMessage support
             app.Use(async (context, next) =>
             {
-                context.Response.Headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups"; // ✅ More secure
+                context.Response.Headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups"; // More secure
                 context.Response.Headers["Cross-Origin-Resource-Policy"] = "cross-origin";
                 await next();
             });
@@ -28,12 +28,12 @@ namespace TimeSnapBackend_MySql.Extensions
         {
             services.Configure<AppSettings>(config.GetSection("AppSettings"));
 
-            // ✅ Define named CORS policy with allowed origins
+            // Define named CORS policy with allowed origins
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll", builder =>
                     builder.WithOrigins(
-                        "http://localhost:4200", // ✅ Add frontend URL
+                        "http://localhost:4200", // Add frontend URL
                         "https://time-snap-frontend-emfd6q0od-sai-vishnus-projects-536bb392.vercel.app",
                         "https://time-snap-frontend-git-main-sai-vishnus-projects-536bb392.vercel.app",
                         "https://time-snap-frontend.vercel.app",
@@ -43,10 +43,12 @@ namespace TimeSnapBackend_MySql.Extensions
                     )
                     .AllowAnyMethod()
                     .AllowAnyHeader()
-                    .AllowCredentials()); // ✅ Ensure credentials can be shared
+                    .AllowCredentials()); // Ensure credentials can be shared
             });
 
             return services;
         }
     }
+
+
 }
