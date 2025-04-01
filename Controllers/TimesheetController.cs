@@ -339,6 +339,14 @@ namespace TimeSnapBackend_MySql.Controllers
 
 
 
+
+
+
+
+
+
+
+
         [AllowAnonymous]
         [HttpPost("addlog")]
         public async Task<ActionResult<Timesheet>> AddTimeLog([FromBody] TimesheetDto timesheetDto)
@@ -370,6 +378,123 @@ namespace TimeSnapBackend_MySql.Controllers
 
             return CreatedAtAction(nameof(AddTimeLog), new { id = timesheet.Id }, timesheet);
         }
+
+
+
+        //[AllowAnonymous]
+        //[HttpPost("upload")]
+        //public async Task<IActionResult> UploadTimesheets([FromBody] List<TimesheetUploadDto> timesheets)
+        //{
+        //    if (timesheets == null || timesheets.Count == 0)
+        //        return BadRequest("No data received.");
+
+        //    var empIds = timesheets.Select(ts => ts.EmpId).Distinct().ToList();
+        //    var taskIds = timesheets.Select(ts => ts.TaskId).Distinct().ToList();
+
+        //    // Check if EmpIds exist in AppUser table
+        //    var validEmpIds = await _context.AppUsers
+        //        .Where(u => empIds.Contains(u.EmpId))
+        //        .Select(u => u.EmpId)
+        //        .ToListAsync();
+
+        //    // Check if TaskIds exist in TaskModel table
+        //    var validTaskIds = await _context.Tasks
+        //        .Where(t => taskIds.Contains(t.TaskId))
+        //        .Select(t => t.TaskId)
+        //        .ToListAsync();
+
+        //    var invalidEmpIds = empIds.Except(validEmpIds).ToList();
+        //    var invalidTaskIds = taskIds.Except(validTaskIds).ToList();
+
+        //    if (invalidEmpIds.Any())
+        //        return BadRequest($"Invalid EmpIds: {string.Join(", ", invalidEmpIds)}");
+
+        //    if (invalidTaskIds.Any())
+        //        return BadRequest($"Invalid TaskIds: {string.Join(", ", invalidTaskIds)}");
+
+        //    var timesheetEntities = timesheets.Select(ts =>
+        //    {
+        //        var timeParts = ts.TotalHours.Split(":");
+        //        var totalMinutes = int.Parse(timeParts[0]) * 60 + int.Parse(timeParts[1]);
+
+        //        return new Timesheet
+        //        {
+        //            EmpId = ts.EmpId,
+        //            TaskId = ts.TaskId,
+        //            Date = ts.Date,
+        //            TotalMinutes = totalMinutes,
+        //            Notes = ts.Notes
+        //        };
+        //    }).ToList();
+
+        //    await _context.Timesheets.AddRangeAsync(timesheetEntities);
+        //    await _context.SaveChangesAsync();
+
+        //    return Ok(new { message = "Timesheets uploaded successfully." });
+
+        //}
+
+
+
+
+
+
+
+        [AllowAnonymous]
+        [HttpPost("upload")]
+        public async Task<IActionResult> UploadTimesheets([FromBody] List<TimesheetUploadDto> timesheets)
+        {
+            if (timesheets == null || timesheets.Count == 0)
+                return BadRequest("No data received.");
+
+            // Step 1: Get User Emails from Timesheets
+            var userEmails = timesheets.Select(ts => ts.UserId).Distinct().ToList();
+
+            // Step 2: Fetch EmployeeIds from useremployees table
+            var emailToEmpIdMap = await _context.UserEmployees
+                .Where(u => userEmails.Contains(u.Email))
+                .ToDictionaryAsync(u => u.Email, u => u.EmployeeId);
+
+            // Step 3: Validate TaskIds exist in tasks table
+            var taskIds = timesheets.Select(ts => ts.TaskId).Distinct().ToList();
+            var validTaskIds = await _context.Tasks
+                .Where(t => taskIds.Contains(t.TaskId))
+                .Select(t => t.TaskId)
+                .ToListAsync();
+
+            var invalidTaskIds = taskIds.Except(validTaskIds).ToList();
+            if (invalidTaskIds.Any())
+                return BadRequest($"Invalid TaskIds: {string.Join(", ", invalidTaskIds)}");
+
+            // Step 4: Convert DTOs to Entities & Set EmpId
+            var timesheetEntities = new List<Timesheet>();
+
+            foreach (var ts in timesheets)
+            {
+                if (!emailToEmpIdMap.TryGetValue(ts.UserId, out var empId))
+                    return BadRequest($"Employee not found for email: {ts.UserId}");
+
+                var timeParts = ts.TotalHours.Split(":");
+                var totalMinutes = int.Parse(timeParts[0]) * 60 + int.Parse(timeParts[1]);
+
+                timesheetEntities.Add(new Timesheet
+                {
+                    EmpId = empId,
+                    TaskId = ts.TaskId,
+                    Date = ts.Date,
+                    TotalMinutes = totalMinutes,
+                    Notes = ts.Notes
+                });
+            }
+
+            await _context.Timesheets.AddRangeAsync(timesheetEntities);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Timesheets uploaded successfully." });
+        }
+
+
+
 
 
 
@@ -446,12 +571,31 @@ namespace TimeSnapBackend_MySql.Controllers
     [FromQuery] int pageSize = 5)
         {
             // Set default startDate (Monday) and endDate (Sunday) if not provided
-            DateTime today = DateTime.UtcNow;
-            DateTime currentWeekStart = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday); // Monday
-            DateTime currentWeekEnd = currentWeekStart.AddDays(6); // Sunday
+            //DateTime today = DateTime.UtcNow;
+            //DateTime currentWeekStart = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday); // Monday
+            //DateTime currentWeekEnd = currentWeekStart.AddDays(6); // Sunday
 
+            //DateTime filterStartDate = startDate?.Date ?? currentWeekStart;
+            //DateTime filterEndDate = endDate?.Date ?? currentWeekEnd;
+
+
+            Console.WriteLine(pageNumber);
+            Console.WriteLine(pageSize);
+
+
+            DateTime today = DateTime.UtcNow;
+
+            // Ensure Monday as the week's start (handles Sunday correctly)
+            DateTime currentWeekStart = today.AddDays(-(int)today.DayOfWeek + (today.DayOfWeek == DayOfWeek.Sunday ? -6 : 1));
+            DateTime currentWeekEnd = currentWeekStart.AddDays(6);
+
+            // Use provided date range, or fallback to current week
             DateTime filterStartDate = startDate?.Date ?? currentWeekStart;
             DateTime filterEndDate = endDate?.Date ?? currentWeekEnd;
+
+
+            Console.WriteLine(filterStartDate);
+            Console.WriteLine(filterEndDate);
 
             var query = from t in _context.Timesheets
                         join u in _context.UserEmployees on t.EmpId equals u.EmployeeId
@@ -470,10 +614,13 @@ namespace TimeSnapBackend_MySql.Controllers
                             Notes = t.Notes
                         };
 
+            //int totalUsers = query.Select(t => t.EmpId).Distinct().Count();
+
+
             // Group by user
             var groupedByUser = query
-                .AsEnumerable()
                 .GroupBy(t => t.EmpId)
+                 .OrderBy(g => g.Key) // Ensures consistent order
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .Select(g => new
@@ -485,6 +632,7 @@ namespace TimeSnapBackend_MySql.Controllers
                 .ToList();
 
             int totalUsers = query.Select(t => t.EmpId).Distinct().Count();
+
 
             return Ok(new { timesheets = groupedByUser, totalUsers });
         }

@@ -483,7 +483,7 @@ namespace TimeSnapBackend_MySql.Controllers
                     {
                         TaskId = task.TaskId,
                         EmpId = dto.EmpId,
-                        Status = Models.TaskStatus.NotStarted // Default status
+                        Status = Models.TasksStatus.NotStarted // Default status
                     };
                     _context.UserTasks.Add(userTask);
                 }
@@ -625,6 +625,17 @@ namespace TimeSnapBackend_MySql.Controllers
 
 
 
+
+
+
+
+
+
+
+
+
+
+
         [HttpPost("tasks/add-task")]
         public async Task<IActionResult> AddTask([FromBody] TaskCreateDto taskDto)
         {
@@ -733,6 +744,45 @@ namespace TimeSnapBackend_MySql.Controllers
             return Ok(new { message = "Task updated successfully" });
         }
 
+
+
+
+
+        [AllowAnonymous]
+        [HttpPut("tasks/update-task/status")]
+        public async Task<IActionResult> UpdateTaskStatus(
+    [FromQuery] string taskId,
+    [FromQuery] string empId,
+    [FromBody] UpdateTaskDto updateTaskDto)
+        {
+            if (updateTaskDto.Status == TasksStatus.Completed && !updateTaskDto.CompletedDate.HasValue)
+            {
+                return BadRequest("Completed date is required when status is Completed.");
+            }
+
+            var task = await _context.UserTasks
+                .FirstOrDefaultAsync(t => t.TaskId == taskId && t.EmpId == empId);
+
+            if (task == null)
+            {
+                return NotFound("Task not found.");
+            }
+
+            task.Status = updateTaskDto.Status;
+
+            if (updateTaskDto.Status == TasksStatus.Completed)
+            {
+                task.CompletedDate = updateTaskDto.CompletedDate;
+            }
+            else
+            {
+                task.CompletedDate = null; // Reset if not completed
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Task updated successfully." });
+
+        }
 
 
 

@@ -68,6 +68,10 @@ namespace TimeSnapBackend_MySql.Models
                 .HasIndex(t => t.TaskId)
                 .IsUnique();
 
+            modelBuilder.Entity<UserEmployee>()
+                .HasIndex(ue => ue.EmployeeId)
+                .IsUnique();
+
             // Configure EmpId as a foreign key in Timesheet
             modelBuilder.Entity<Timesheet>()
                 .HasOne(t => t.Employee)

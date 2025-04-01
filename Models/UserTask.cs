@@ -40,7 +40,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TimeSnapBackend_MySql.Models
 {
-    public enum TaskStatus
+    public enum TasksStatus
     {
         NotStarted,
         InProgress,
@@ -68,7 +68,7 @@ namespace TimeSnapBackend_MySql.Models
         public virtual AppUser? Employee { get; set; }
 
         [Column(TypeName = "TINYINT")]
-        public TaskStatus Status { get; set; } = TaskStatus.NotStarted; // User-specific Status
+        public TasksStatus Status { get; set; } = TasksStatus.NotStarted; // User-specific Status
 
         [Column(TypeName = "DATETIME(6)")]
         public DateTime? CompletedDate { get; set; }
