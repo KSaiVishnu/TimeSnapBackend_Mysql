@@ -1,24 +1,19 @@
-# Stage 1: Build
+# Use .NET SDK image to build the app
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
 
-# Copy solution and project files
-COPY TimeSnapBackend_Mysql.sln ./
-COPY TimeSnapBackend_Mysql/TimeSnapBackend_Mysql.csproj TimeSnapBackend_Mysql/
-RUN dotnet restore TimeSnapBackend_Mysql/TimeSnapBackend_Mysql.csproj
+WORKDIR /app
 
-# Copy the full project and build
-COPY TimeSnapBackend_Mysql/. TimeSnapBackend_Mysql/
-WORKDIR /src/TimeSnapBackend_Mysql
-RUN dotnet publish -c Release -o /app/publish
+# Copy csproj and restore dependencies
+COPY TimeSnapBackend_Mysql.csproj ./
+RUN dotnet restore
 
-# Stage 2: Runtime
+# Copy everything else and build
+COPY . ./
+RUN dotnet publish -c Release -o out
+
+# Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
-COPY --from=build /app/publish .
+COPY --from=build /app/out .
 
-# Expose port
-EXPOSE 80
-
-# Run the app
 ENTRYPOINT ["dotnet", "TimeSnapBackend_Mysql.dll"]

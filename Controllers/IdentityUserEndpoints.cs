@@ -120,8 +120,12 @@ namespace TimeSnapBackend_MySql.Controllers
             //};
 
             // Verify Google Token Properly
-            var clientId = Environment.GetEnvironmentVariable("GoogleClientId")
+            //var clientId = Environment.GetEnvironmentVariable("GoogleClientId")
+            //   ?? config["Google:ClientId"];
+
+            var clientId = Environment.GetEnvironmentVariable("Google__ClientId")
                ?? config["Google:ClientId"];
+
 
             var settings = new GoogleJsonWebSignature.ValidationSettings
             {
@@ -177,8 +181,14 @@ namespace TimeSnapBackend_MySql.Controllers
             var roles = await userManager.GetRolesAsync(user);
             //var signInKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(appSettings.Value.JWTSecret));
 
-            var jwtSecret = Environment.GetEnvironmentVariable("JWTSecret")
-                ?? appSettings.Value.JWTSecret;
+            //var jwtSecret = Environment.GetEnvironmentVariable("JWTSecret")
+            //    ?? appSettings.Value.JWTSecret;
+
+
+            var jwtSecret = Environment.GetEnvironmentVariable("AppSettings__JWTSecret")
+                 ?? appSettings.Value.JWTSecret;
+
+
             var signInKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
 
 
@@ -226,8 +236,11 @@ namespace TimeSnapBackend_MySql.Controllers
         private static async Task SendOtpEmail(string email, string otp, IConfiguration config)
         {
             // Retrieve SendGrid API Key from environment variables
-            var apiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY")
-                ?? config["SendGrid:ApiKey"];
+            //var apiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY")
+            //    ?? config["SendGrid:ApiKey"];
+
+            var apiKey = Environment.GetEnvironmentVariable("SendGrid__ApiKey")
+    ?? config["SendGrid:ApiKey"];
 
 
             if (string.IsNullOrEmpty(apiKey))

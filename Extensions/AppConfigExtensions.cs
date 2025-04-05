@@ -26,7 +26,15 @@ namespace TimeSnapBackend_MySql.Extensions
             this IServiceCollection services,
             IConfiguration config)
         {
-            services.Configure<AppSettings>(config.GetSection("AppSettings"));
+            //services.Configure<AppSettings>(config.GetSection("AppSettings"));
+
+            services.Configure<AppSettings>(options =>
+            {
+                options.JWTSecret = Environment.GetEnvironmentVariable("AppSettings__JWTSecret")
+                                    ?? config["AppSettings:JWTSecret"]!;
+            });
+
+
 
             // Define named CORS policy with allowed origins
             services.AddCors(options =>

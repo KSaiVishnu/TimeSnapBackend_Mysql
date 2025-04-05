@@ -10,8 +10,12 @@ namespace TimeSnapBackend_MySql.Extensions
             IConfiguration config)
         {
             //var connectionString = config.GetConnectionString("DefaultConnection");
-            var connectionString = Environment.GetEnvironmentVariable("SQLAZURECONNSTR_DefaultConnection") 
-                                    ?? config.GetConnectionString("DefaultConnection");
+            //var connectionString = Environment.GetEnvironmentVariable("SQLAZURECONNSTR_DefaultConnection") 
+            //                        ?? config.GetConnectionString("DefaultConnection");
+
+            var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+                        ?? config.GetConnectionString("DefaultConnection");
+
 
             if (string.IsNullOrEmpty(connectionString))
             {

@@ -17,8 +17,12 @@ namespace TimeSnapBackend_MySql.Controllers
 
         public ReportsController(IConfiguration configuration)
         {
-            _connectionString = Environment.GetEnvironmentVariable("SQLAZURECONNSTR_DefaultConnection")
+            //_connectionString = Environment.GetEnvironmentVariable("SQLAZURECONNSTR_DefaultConnection")
+            //                        ?? configuration.GetConnectionString("DefaultConnection")!;
+
+             _connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
                                     ?? configuration.GetConnectionString("DefaultConnection")!;
+
         }
 
         [AllowAnonymous]
