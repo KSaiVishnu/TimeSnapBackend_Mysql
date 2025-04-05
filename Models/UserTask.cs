@@ -47,7 +47,8 @@ namespace TimeSnapBackend_MySql.Models
         Completed
     }
 
-    [Table("UserTasks")]
+    //[Table("UserTasks")]
+    [Table("usertasks")]
     public class UserTask
     {
         [Key]

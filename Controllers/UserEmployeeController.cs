@@ -55,8 +55,13 @@ namespace TimeSnapBackend_MySql.Controllers
         [HttpGet("get-last-identity")]
         public async Task<IActionResult> GetLastIdentity()
         {
+            //var lastIdentity = await _context.UserEmployees
+            //    .FromSqlRaw("SELECT MAX(Id) AS Id FROM UserEmployees")
+            //    .Select(e => e.Id)
+            //    .FirstOrDefaultAsync();
+
             var lastIdentity = await _context.UserEmployees
-                .FromSqlRaw("SELECT MAX(Id) AS Id FROM UserEmployees")
+                .FromSqlRaw("SELECT MAX(Id) AS Id FROM useremployees")
                 .Select(e => e.Id)
                 .FirstOrDefaultAsync();
 

@@ -5,6 +5,7 @@ using MySqlConnector;
 using TimeSnapBackend_MySql.Dtos;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Net;
 
 namespace TimeSnapBackend_MySql.Controllers
 {
@@ -17,13 +18,19 @@ namespace TimeSnapBackend_MySql.Controllers
         public ReportsController(IConfiguration configuration)
         {
             _connectionString = Environment.GetEnvironmentVariable("SQLAZURECONNSTR_DefaultConnection")
-                                    ?? configuration.GetConnectionString("DefaultConnection");
+                                    ?? configuration.GetConnectionString("DefaultConnection")!;
         }
 
         [AllowAnonymous]
         [HttpGet("completed-tasks")]
         public async Task<IActionResult> GetCompletedTasks([FromQuery] int months)
         {
+            if (months <= 0)
+            {
+                return BadRequest(new { message = "Months parameter must be greater than zero." });
+            }
+
+
             var query = @"
             WITH UserData AS (
                 SELECT 
@@ -64,12 +71,30 @@ namespace TimeSnapBackend_MySql.Controllers
             ORDER BY ud.TotalHoursSpent DESC;
             ";
 
-            using var connection = new MySqlConnection(_connectionString);
-            await connection.OpenAsync();
+            try
+            {
+                using var connection = new MySqlConnection(_connectionString);
+                await connection.OpenAsync();
 
-            var tasks = await connection.QueryAsync<TaskCompletionDto>(query, new { Months = months });
+                var tasks = await connection.QueryAsync<TaskCompletionDto>(query, new { Months = months });
 
-            return Ok(tasks);
+                if (tasks == null || !tasks.AsList().Any())
+                {
+                    return NotFound(new { message = "No completed tasks found for the given time period." });
+                }
+
+                return Ok(tasks);
+            }
+
+            catch (MySqlException ex)
+            {
+                return StatusCode((int)HttpStatusCode.InternalServerError, new { message = "Database error occurred.", details = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode((int)HttpStatusCode.InternalServerError, new { message = "An unexpected error occurred.", details = ex.Message });
+            }
+
         }
     }
 }

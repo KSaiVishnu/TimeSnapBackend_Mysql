@@ -497,7 +497,7 @@ namespace TimeSnapBackend_MySql.Controllers
 
 
 
-        [AllowAnonymous]
+        //[AllowAnonymous]
         [HttpGet("tasks")]
         public async Task<IActionResult> GetTasks([FromQuery] string? billingType)
         {
@@ -533,7 +533,7 @@ namespace TimeSnapBackend_MySql.Controllers
 
 
 
-        [AllowAnonymous]
+        //[AllowAnonymous]
         [HttpGet("tasks/{empId}")]
         public async Task<IActionResult> GetUserTasks(string empId)
         {

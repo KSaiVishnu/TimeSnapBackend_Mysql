@@ -13,21 +13,19 @@ namespace TimeSnapBackend_MySql.Extensions
             var connectionString = Environment.GetEnvironmentVariable("SQLAZURECONNSTR_DefaultConnection") 
                                     ?? config.GetConnectionString("DefaultConnection");
 
-
             if (string.IsNullOrEmpty(connectionString))
             {
                 throw new InvalidOperationException("Database connection string is missing.");
             }
 
             //Console.WriteLine("Using MySQL Connection: " + connectionString);
-
             // Configure MySQL instead of SQL Server
             //services.AddDbContext<AppDbContext>(options =>
             //    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 36))) // Adjust MySQL version if needed
             //);
 
             services.AddDbContext<AppDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+                                options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
 
             return services;

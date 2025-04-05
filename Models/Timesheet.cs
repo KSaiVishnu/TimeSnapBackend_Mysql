@@ -44,7 +44,8 @@ using System.Text.Json.Serialization;
 
 namespace TimeSnapBackend_MySql.Models
 {
-    [Table("Timesheets")]
+    //[Table("Timesheets")]
+    [Table("timesheets")]
     public class Timesheet
     {
         [Key]

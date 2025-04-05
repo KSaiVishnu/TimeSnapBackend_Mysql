@@ -84,7 +84,8 @@ using System.Collections.Generic;
 
 namespace TimeSnapBackend_MySql.Models
 {
-    [Table("Tasks")]
+    //[Table("Tasks")]
+    [Table("tasks")]
     public class TaskModel
     {
         [Key]

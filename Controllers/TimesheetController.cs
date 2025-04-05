@@ -195,6 +195,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
 using TimeSnapBackend_MySql.Dtos;
+using Microsoft.Extensions.Logging;
 
 namespace TimeSnapBackend_MySql.Controllers
 {
@@ -203,10 +204,14 @@ namespace TimeSnapBackend_MySql.Controllers
     public class TimesheetController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly ILogger<TimesheetController> _logger;
 
-        public TimesheetController(AppDbContext context)
+
+        public TimesheetController(AppDbContext context, ILogger<TimesheetController> logger)
         {
             _context = context;
+            _logger = logger;
+
         }
 
         //[AllowAnonymous]
@@ -378,6 +383,8 @@ namespace TimeSnapBackend_MySql.Controllers
 
             return CreatedAtAction(nameof(AddTimeLog), new { id = timesheet.Id }, timesheet);
         }
+
+
 
 
 

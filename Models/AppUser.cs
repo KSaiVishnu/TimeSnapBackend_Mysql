@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 
 namespace TimeSnapBackend_MySql.Models
 {
+    [Table("aspnetusers")]
     public class AppUser : IdentityUser
     {
         [PersonalData]

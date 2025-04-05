@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
+using TimeSnapBackend_MySql.Middlewares;
 
 namespace TimeSnapBackend_MySql
 {
@@ -15,30 +16,33 @@ namespace TimeSnapBackend_MySql
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            var services = builder.Services;
 
-            builder.Services.AddDistributedMemoryCache();
-            builder.Services.AddMemoryCache();
-            builder.Services.AddHttpContextAccessor();
-            builder.Services.AddSession(options =>
+            services.AddDistributedMemoryCache();
+            services.AddMemoryCache();
+            services.AddHttpContextAccessor();
+
+            services.AddSession(options =>
             {
                 options.IdleTimeout = TimeSpan.FromMinutes(5); // OTP expires in 5 mins
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
             });
 
-            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme);
-            builder.Services.AddControllers();
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme);
+            services.AddControllers();
 
             // Inject MySQL DB Context
-            builder.Services.InjectDbContext(builder.Configuration);
+            services.InjectDbContext(builder.Configuration);
 
-            builder.Services.AddSwaggerExplorer()
+            services.AddSwaggerExplorer()
                 .AddAppConfig(builder.Configuration)
                 .AddIdentityHandlersAndStores()
                 .ConfigureIdentityOptions()
                 .AddIdentityAuth(builder.Configuration);
 
             var app = builder.Build();
+            app.UseMiddleware<ExceptionMiddleware>();
 
             app.UseSession();
             app.UseRouting();

@@ -40,6 +40,7 @@
 
 
 
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -58,6 +59,14 @@ namespace TimeSnapBackend_MySql.Models
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<AppUser>().ToTable("aspnetusers");
+            modelBuilder.Entity<IdentityRole>().ToTable("aspnetroles");
+            modelBuilder.Entity<IdentityUserRole<string>>().ToTable("aspnetuserroles");
+            modelBuilder.Entity<IdentityUserClaim<string>>().ToTable("aspnetuserclaims");
+            modelBuilder.Entity<IdentityUserLogin<string>>().ToTable("aspnetuserlogins");
+            modelBuilder.Entity<IdentityRoleClaim<string>>().ToTable("aspnetroleclaims");
+            modelBuilder.Entity<IdentityUserToken<string>>().ToTable("aspnetusertokens");
 
             // Ensure EmpId is unique in AppUser
             modelBuilder.Entity<AppUser>()

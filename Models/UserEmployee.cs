@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TimeSnapBackend_MySql.Models
 {
+    [Table("useremployees")]
     public class UserEmployee
     {
         [Key]

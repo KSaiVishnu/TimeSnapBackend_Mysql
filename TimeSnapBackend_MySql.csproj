@@ -14,12 +14,14 @@
 		<PackageReference Include="EPPlus" Version="7.7.0" />
 		<PackageReference Include="ExcelDataReader" Version="3.7.0" />
 		<PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
+		<PackageReference Include="FluentValidation" Version="11.11.0" />
 		<PackageReference Include="Google.Apis.Auth" Version="1.69.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.12" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.10" />
 		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.12" />
 		<PackageReference Include="Microsoft.AspNetCore.Session" Version="2.3.0" />
+		<PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
 
 		<!-- ✅ Replaced SQL Server with MySQL -->
 		<PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.1" />
