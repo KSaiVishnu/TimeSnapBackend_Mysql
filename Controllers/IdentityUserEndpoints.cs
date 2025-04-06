@@ -434,6 +434,13 @@ namespace TimeSnapBackend_MySql.Controllers
         {
             var httpContext = httpContextAccessor.HttpContext; // Get HttpContext
 
+            Console.WriteLine("Session Keys:");
+            foreach (var key in httpContext.Session.Keys)
+            {
+                Console.WriteLine($"Key: {key}, Value: {httpContext.Session.GetString(key)}");
+            }
+
+
             var storedOtp = httpContext!.Session.GetString("Otp");
             var storedEmail = httpContext.Session.GetString("Email");
 

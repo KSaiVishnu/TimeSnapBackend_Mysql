@@ -20,7 +20,6 @@ namespace TimeSnapBackend_MySql
 
             services.AddDistributedMemoryCache();
             services.AddMemoryCache();
-            services.AddHttpContextAccessor();
 
             services.AddSession(options =>
             {
@@ -30,6 +29,10 @@ namespace TimeSnapBackend_MySql
                 options.Cookie.SameSite = SameSiteMode.None; // Important
                 options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
             });
+
+            services.AddHttpContextAccessor();
+
+
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme);
             services.AddControllers();
@@ -49,19 +52,28 @@ namespace TimeSnapBackend_MySql
             // ✅ CORS must be before session and controllers
             //app.UseCors("AllowAll");
 
+
+
+
+
+            app.UseRouting();
+
+
+
+            app.ConfigureSwaggerExplorer()
+                .ConfigureCORS(builder.Configuration)
+                .AddIdentityAuthMiddlewares();
+
+            app.UseCors("AllowAngular");
+
+
             app.UseCookiePolicy(new CookiePolicyOptions
             {
                 MinimumSameSitePolicy = SameSiteMode.None,
                 Secure = CookieSecurePolicy.Always
             });
 
-
             app.UseSession();
-            app.UseRouting();
-
-            app.ConfigureSwaggerExplorer()
-                .ConfigureCORS(builder.Configuration)
-                .AddIdentityAuthMiddlewares();
 
             app.UseHttpsRedirection();
 
