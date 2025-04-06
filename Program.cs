@@ -27,6 +27,8 @@ namespace TimeSnapBackend_MySql
                 options.IdleTimeout = TimeSpan.FromMinutes(5); // OTP expires in 5 mins
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
+                options.Cookie.SameSite = SameSiteMode.None; // Important
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
             });
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme);
@@ -42,7 +44,17 @@ namespace TimeSnapBackend_MySql
                 .AddIdentityAuth(builder.Configuration);
 
             var app = builder.Build();
-            app.UseMiddleware<ExceptionMiddleware>();
+            //app.UseMiddleware<ExceptionMiddleware>();
+
+            // ✅ CORS must be before session and controllers
+            //app.UseCors("AllowAll");
+
+            app.UseCookiePolicy(new CookiePolicyOptions
+            {
+                MinimumSameSitePolicy = SameSiteMode.None,
+                Secure = CookieSecurePolicy.Always
+            });
+
 
             app.UseSession();
             app.UseRouting();

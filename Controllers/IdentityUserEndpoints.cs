@@ -26,6 +26,7 @@ namespace TimeSnapBackend_MySql.Controllers
         public string? Password { get; set; }
         public string? FullName { get; set; }
         public string? Role { get; set; }
+        public string? Otp { get; set; }
     }
 
     public class LoginModel
@@ -97,6 +98,9 @@ namespace TimeSnapBackend_MySql.Controllers
             app.MapPost("/verify-otp", VerifyOtp);
 
             app.MapPost("/google-login", GoogleLogin);
+
+            app.MapPost("/verify-and-create", VerifyAndCreateUser);
+
 
             return app;
         }
@@ -298,6 +302,11 @@ namespace TimeSnapBackend_MySql.Controllers
             httpContext.Session.SetString("Email", body.Email!);
             httpContext.Session.SetString("Otp", otp);
 
+            Console.WriteLine("Session Otp Set: " + httpContext.Session.GetString("Otp"));
+            Console.WriteLine("Session Email Set: " + httpContext.Session.GetString("Email"));
+
+
+
             //await SendOtpEmail(body.Email!, otp);
             await SendOtpEmail(body.Email!, otp, httpContext.RequestServices.GetRequiredService<IConfiguration>());
 
@@ -412,8 +421,74 @@ namespace TimeSnapBackend_MySql.Controllers
             else
                 return Results.BadRequest(new { message = "Username or password is incorrect." });
         }
-    
-    
+
+
+
+
+        [AllowAnonymous]
+        public static async Task<IResult> VerifyAndCreateUser(
+
+    IHttpContextAccessor httpContextAccessor,
+    UserManager<AppUser> userManager,
+    [FromBody] UserRegistrationModel model)
+        {
+            var httpContext = httpContextAccessor.HttpContext; // Get HttpContext
+
+            var storedOtp = httpContext!.Session.GetString("Otp");
+            var storedEmail = httpContext.Session.GetString("Email");
+
+            //Console.WriteLine("otp"+storedOtp);
+            //Console.WriteLine("email" + storedEmail);
+
+            //Console.WriteLine("received otp" + model.Otp);
+            //Console.WriteLine("received email" + model.Email);
+
+            var receivedOtp = model.Otp;
+
+            Console.WriteLine("Stored OTP: " + storedOtp);
+            Console.WriteLine("Received OTP: " + receivedOtp);
+
+            if (storedOtp != receivedOtp)
+            {
+                return Results.BadRequest("Incorrect OTP");
+            }
+
+
+
+            if (storedOtp == null || storedEmail == null || model.Email != storedEmail || model.Otp != storedOtp)
+            {
+                return Results.BadRequest(new { message = "Invalid OTP or email." });
+            }
+
+            var context = httpContext.RequestServices.GetRequiredService<AppDbContext>();
+            var employee = context.UserEmployees.FirstOrDefault(e => e.Email == model.Email);
+
+            if (employee == null)
+            {
+                return Results.BadRequest(new { message = "Employee not found." });
+            }
+
+            AppUser user = new AppUser
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                FullName = model.FullName,
+                EmpId = employee.EmployeeId
+            };
+
+            var result = await userManager.CreateAsync(user, model.Password!);
+
+            if (!result.Succeeded)
+            {
+                return Results.BadRequest(new { errors = result.Errors });
+            }
+
+            await userManager.AddToRoleAsync(user, model.Role!);
+            return Results.Ok(new { succeeded = true });
+        }
+
+
+
     }
 }
 
