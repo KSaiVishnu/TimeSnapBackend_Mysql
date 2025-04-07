@@ -17,6 +17,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Google.Apis.Auth;
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
+using System.Net.Http;
 
 namespace TimeSnapBackend_MySql.Controllers
 {
@@ -78,6 +80,17 @@ namespace TimeSnapBackend_MySql.Controllers
         public string? Name { get; set; }
     }
 
+    public class EmailDto
+    {
+        public string? Email { get; set; }
+    }
+
+
+    public class PasswordResetDto
+    {
+        public string Email { get; set; } = string.Empty;
+        public string NewPassword { get; set; } = string.Empty;
+    }
 
 
 
@@ -99,7 +112,20 @@ namespace TimeSnapBackend_MySql.Controllers
 
             app.MapPost("/google-login", GoogleLogin);
 
+            app.MapPost("/pre-register", PreRegister);
+
+
             app.MapPost("/verify-and-create", VerifyAndCreateUser);
+
+            app.MapPost("/send-reset-otp", SendResetOtp);
+           
+
+            app.MapPost("/verify-reset-otp", VerifyResetOtp);
+
+           
+
+            app.MapPost("/set-new-password", SetNewPassword);
+
 
 
             return app;
@@ -425,55 +451,145 @@ namespace TimeSnapBackend_MySql.Controllers
 
 
 
+
+
+
+
+
+
+
+
+            [AllowAnonymous]
+            public static async Task<IResult> PreRegister(
+                HttpContext http,
+                AppDbContext db,
+                UserManager<AppUser> userManager,
+                IHttpContextAccessor httpContextAccessor,
+                [FromBody] EmailDto dto)
+            {
+                try
+                {
+                    if (string.IsNullOrWhiteSpace(dto.Email))
+                        return Results.BadRequest("Email is required.");
+
+                    var email = dto.Email.Trim().ToLower();
+
+                    var emp = await db.UserEmployees.FirstOrDefaultAsync(e => e.Email.ToLower() == email);
+                    if (emp == null)
+                        return Results.BadRequest("You are not authorized to register.");
+
+                    var existingUser = await db.AppUsers.FirstOrDefaultAsync(u => u.Email.ToLower() == email);
+                    if (existingUser != null)
+                        return Results.BadRequest("User already registered.");
+
+                    // Reuse your existing SendOtp method
+                    var otpRequest = new OtpRequestModel { Email = dto.Email };
+                    return await SendOtp(userManager, otpRequest, httpContextAccessor);
+                }
+                catch (Exception)
+                {
+                    return Results.Problem("Something went wrong. Please try again later.");
+                }
+            }
+
+
+
+
+
+
+
+
+
+
+
+        //    [AllowAnonymous]
+        //    public static async Task<IResult> VerifyAndCreateUser(
+
+        //IHttpContextAccessor httpContextAccessor,
+        //UserManager<AppUser> userManager,
+        //[FromBody] UserRegistrationModel model)
+        //    {
+        //        var httpContext = httpContextAccessor.HttpContext; // Get HttpContext
+
+        //        Console.WriteLine("Session Keys:");
+        //        foreach (var key in httpContext.Session.Keys)
+        //        {
+        //            Console.WriteLine($"Key: {key}, Value: {httpContext.Session.GetString(key)}");
+        //        }
+
+
+        //        var storedOtp = httpContext!.Session.GetString("Otp");
+        //        var storedEmail = httpContext.Session.GetString("Email");
+
+        //        var receivedOtp = model.Otp;
+
+        //        Console.WriteLine("Stored OTP: " + storedOtp);
+        //        Console.WriteLine("Received OTP: " + receivedOtp);
+
+        //        if (storedOtp != receivedOtp)
+        //        {
+        //            return Results.BadRequest("Incorrect OTP");
+        //        }
+
+
+
+        //        if (storedOtp == null || storedEmail == null || model.Email != storedEmail || model.Otp != storedOtp)
+        //        {
+        //            return Results.BadRequest(new { message = "Invalid OTP or email." });
+        //        }
+
+        //        var context = httpContext.RequestServices.GetRequiredService<AppDbContext>();
+        //        var employee = context.UserEmployees.FirstOrDefault(e => e.Email == model.Email);
+
+        //        if (employee == null)
+        //        {
+        //            return Results.BadRequest(new { message = "Employee not found." });
+        //        }
+
+        //        AppUser user = new AppUser
+        //        {
+        //            UserName = model.Email,
+        //            Email = model.Email,
+        //            FullName = model.FullName,
+        //            EmpId = employee.EmployeeId
+        //        };
+
+        //        var result = await userManager.CreateAsync(user, model.Password!);
+
+        //        if (!result.Succeeded)
+        //        {
+        //            return Results.BadRequest(new { errors = result.Errors });
+        //        }
+
+        //        await userManager.AddToRoleAsync(user, model.Role!);
+        //        return Results.Ok(new { succeeded = true });
+        //    }
+
+
+
+
+
         [AllowAnonymous]
         public static async Task<IResult> VerifyAndCreateUser(
-
     IHttpContextAccessor httpContextAccessor,
     UserManager<AppUser> userManager,
+    IOptions<AppSettings> appSettings,
     [FromBody] UserRegistrationModel model)
         {
-            var httpContext = httpContextAccessor.HttpContext; // Get HttpContext
+            var httpContext = httpContextAccessor.HttpContext;
+            if (httpContext == null) return Results.BadRequest("HttpContext is null.");
 
-            Console.WriteLine("Session Keys:");
-            foreach (var key in httpContext.Session.Keys)
-            {
-                Console.WriteLine($"Key: {key}, Value: {httpContext.Session.GetString(key)}");
-            }
-
-
-            var storedOtp = httpContext!.Session.GetString("Otp");
+            var storedOtp = httpContext.Session.GetString("Otp");
             var storedEmail = httpContext.Session.GetString("Email");
 
-            //Console.WriteLine("otp"+storedOtp);
-            //Console.WriteLine("email" + storedEmail);
-
-            //Console.WriteLine("received otp" + model.Otp);
-            //Console.WriteLine("received email" + model.Email);
-
-            var receivedOtp = model.Otp;
-
-            Console.WriteLine("Stored OTP: " + storedOtp);
-            Console.WriteLine("Received OTP: " + receivedOtp);
-
-            if (storedOtp != receivedOtp)
-            {
-                return Results.BadRequest("Incorrect OTP");
-            }
-
-
-
             if (storedOtp == null || storedEmail == null || model.Email != storedEmail || model.Otp != storedOtp)
-            {
                 return Results.BadRequest(new { message = "Invalid OTP or email." });
-            }
 
             var context = httpContext.RequestServices.GetRequiredService<AppDbContext>();
             var employee = context.UserEmployees.FirstOrDefault(e => e.Email == model.Email);
 
             if (employee == null)
-            {
                 return Results.BadRequest(new { message = "Employee not found." });
-            }
 
             AppUser user = new AppUser
             {
@@ -484,15 +600,156 @@ namespace TimeSnapBackend_MySql.Controllers
             };
 
             var result = await userManager.CreateAsync(user, model.Password!);
-
             if (!result.Succeeded)
-            {
                 return Results.BadRequest(new { errors = result.Errors });
-            }
 
             await userManager.AddToRoleAsync(user, model.Role!);
-            return Results.Ok(new { succeeded = true });
+
+            // Generate JWT token on successful registration
+            var roles = await userManager.GetRolesAsync(user);
+            var signInKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(appSettings.Value.JWTSecret)
+            );
+
+            ClaimsIdentity claims = new(
+            [
+                new("UserID", user.Id.ToString()),
+        new(ClaimTypes.Role, roles.FirstOrDefault() ?? "Employee"),
+    ]);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = claims,
+                Expires = DateTime.UtcNow.AddDays(10),
+                SigningCredentials = new SigningCredentials(signInKey, SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var securityToken = tokenHandler.CreateToken(tokenDescriptor);
+            var token = tokenHandler.WriteToken(securityToken);
+
+            return Results.Ok(new { token });
         }
+
+
+
+
+
+
+        [AllowAnonymous]
+        public static async Task<IResult> SendResetOtp(
+    [FromBody] EmailDto request,
+   IHttpContextAccessor httpContextAccessor,
+    AppDbContext db)
+        {
+            var httpContext = httpContextAccessor.HttpContext; // Get HttpContext
+            if (httpContext == null)
+            {
+                return Results.BadRequest("HttpContext is null.");
+            }
+
+            // Check if user exists
+            var user = await db.AppUsers.FirstOrDefaultAsync(u => u.Email.ToLower() == request.Email.ToLower());
+            if (user == null)
+                return Results.BadRequest(new { message = "Email not registered." });
+
+            var otp = new Random().Next(100000, 999999).ToString();
+            httpContext.Session.SetString("ResetEmail", request.Email);
+            httpContext.Session.SetString("ResetOtp", otp);
+
+            await SendOtpEmail(request.Email, otp, httpContext.RequestServices.GetRequiredService<IConfiguration>()); // Use your email service
+            return Results.Ok();
+        }
+
+
+
+
+
+        [AllowAnonymous]
+        public static async Task<IResult> VerifyResetOtp(
+    [FromBody] OtpVerificationDto model,
+    IHttpContextAccessor httpContextAccessor)
+        {
+            var httpContext = httpContextAccessor.HttpContext;
+            if (httpContext == null)
+                return Results.BadRequest(new { message = "HttpContext is null." });
+
+            var storedEmail = httpContext.Session.GetString("ResetEmail");
+            var storedOtp = httpContext.Session.GetString("ResetOtp");
+
+            if (storedEmail == null || storedOtp == null)
+                return Results.BadRequest(new { message = "OTP expired or not requested." });
+
+            Console.WriteLine("req email"+model.Email);
+            Console.WriteLine("req otp"+model.Otp);
+
+            Console.WriteLine("stored mail"+storedEmail);
+            Console.WriteLine("stored otp"+storedOtp);
+
+            //if (model.Email != storedEmail || model.Otp != storedOtp)
+            //    return Results.BadRequest(new { message = "Invalid OTP or email." });
+
+            if (model.Email.Trim().ToLower() != storedEmail.Trim().ToLower() || model.Otp.Trim() != storedOtp.Trim())
+            {
+                return Results.BadRequest(new { message = "Invalid OTP or email." });
+            }
+
+
+            // Optionally clear OTP from session after successful verification
+            httpContext.Session.Remove("ResetOtp");
+
+            return Results.Ok(new { message = "OTP verified successfully." });
+        }
+
+
+
+
+
+
+
+
+        [AllowAnonymous]
+        public static async Task<IResult> SetNewPassword(
+            [FromBody] PasswordResetDto model,
+            IHttpContextAccessor http,
+            UserManager<AppUser> userManager)
+        {
+            var session = http.HttpContext!.Session;
+            var email = session.GetString("ResetEmail");
+
+            if (email == null || model.Email != email)
+                return Results.BadRequest(new { message = "OTP not verified or session expired." });
+
+            var user = await userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+                return Results.BadRequest(new { message = "User not found." });
+
+            var hasPassword = await userManager.HasPasswordAsync(user);
+
+            if (hasPassword)
+            {
+                var token = await userManager.GeneratePasswordResetTokenAsync(user);
+                var resetResult = await userManager.ResetPasswordAsync(user, token, model.NewPassword!);
+
+                if (!resetResult.Succeeded)
+                    return Results.BadRequest(new { message = "Failed to reset password.", errors = resetResult.Errors });
+            }
+            else
+            {
+                var addResult = await userManager.AddPasswordAsync(user, model.NewPassword!);
+
+                if (!addResult.Succeeded)
+                    return Results.BadRequest(new { message = "Failed to set password.", errors = addResult.Errors });
+            }
+
+            // Clean session after password is set
+            session.Remove("ResetEmail");
+            session.Remove("ResetOtp");
+
+            return Results.Ok(new { message = "Password set successfully." });
+        }
+
+
 
 
 
