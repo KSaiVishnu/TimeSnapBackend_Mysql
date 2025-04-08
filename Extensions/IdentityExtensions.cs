@@ -30,7 +30,8 @@ namespace TimeSnapBackend_MySql.Extensions
     {
         public static IServiceCollection AddIdentityHandlersAndStores(this IServiceCollection services)
         {
-            services.AddIdentityApiEndpoints<AppUser>()
+            // Services From Identity Core.
+            services.AddIdentityApiEndpoints<AppUser>() // This will add api endpoints like signin, signup, forgot password... e.t.c (some default api endpoints by asp.net core Identity) - (These we can see in swagger documentation).
                     .AddRoles<IdentityRole>()
                     .AddEntityFrameworkStores<AppDbContext>();
 

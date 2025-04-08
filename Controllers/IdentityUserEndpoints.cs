@@ -105,7 +105,7 @@ namespace TimeSnapBackend_MySql.Controllers
             app.MapPost("/signup", CreateUser);
             app.MapPost("/signin", SignIn);
             //app.MapPost("/google-signin", GoogleSignIn);
-            app.MapPost("/remove-user", RemoveUser);
+            //app.MapPost("/remove-user", RemoveUser);
             app.MapPost("/find-user", FindUser);
             app.MapPost("/send-otp", SendOtp);
             app.MapPost("/verify-otp", VerifyOtp);

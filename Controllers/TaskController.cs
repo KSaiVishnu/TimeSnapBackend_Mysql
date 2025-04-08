@@ -457,8 +457,8 @@ namespace TimeSnapBackend_MySql.Controllers
 
             foreach (var dto in taskDtos)
             {
-                // Check if task already exists based on TaskName
-                var task = await _context.Tasks.FirstOrDefaultAsync(t => t.TaskName == dto.Task);
+                // Check if task already exists based on TaskId
+                var task = await _context.Tasks.FirstOrDefaultAsync(t => t.TaskId == dto.TaskID);
 
                 if (task == null)
                 {

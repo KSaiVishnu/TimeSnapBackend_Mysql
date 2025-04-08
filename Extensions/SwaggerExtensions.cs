@@ -42,7 +42,7 @@ namespace TimeSnapBackend_MySql.Extensions
                     }
                 });
 
-                options.OperationFilter<FileUploadOperationFilter>();
+                //options.OperationFilter<FileUploadOperationFilter>();
             });
             return services;
         }
@@ -52,7 +52,11 @@ namespace TimeSnapBackend_MySql.Extensions
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
-                app.UseSwaggerUI();
+                //app.UseSwaggerUI();
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "TimeSnap API v1");
+                });
             }
             return app;
         }
