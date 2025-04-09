@@ -12,12 +12,12 @@ namespace TimeSnapBackend_MySql.Extensions
     {
         public Task<IdentityResult> ValidateAsync(UserManager<TUser> manager, TUser user)
         {
-            if (!user.Email!.EndsWith("@gmail.com") && !user.Email.EndsWith("@framsikt.no"))
+            if (user.Email!.EndsWith("@framsikt.no"))
             {
                 return Task.FromResult(IdentityResult.Failed(new IdentityError
                 {
                     Code = "InvalidEmailDomain",
-                    Description = "Only email addresses ending with @gmail.com or @framsikt.no are allowed."
+                    Description = "Only email addresses ending with @framsikt.no are allowed."
                 }));
             }
 

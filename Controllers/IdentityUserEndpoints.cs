@@ -19,6 +19,7 @@ using Google.Apis.Auth;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Http;
+using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace TimeSnapBackend_MySql.Controllers
 {
@@ -170,17 +171,36 @@ namespace TimeSnapBackend_MySql.Controllers
             }
             catch (Exception ex)
             {
-                return Results.BadRequest($"Invalid Google token: {ex.Message}");
+                //return Results.BadRequest($"Invalid Google token: {ex.Message}");
+                return Results.BadRequest(new
+                {
+                    code = "InvalidGoogleToken",
+                    message = $"Invalid Google token. {ex.Message}"
+                });
             }
 
             string email = payload.Email;
             string fullName = payload.Name;
 
+            if (!email.EndsWith("@framsikt.no"))
+            {
+                return Results.BadRequest(new
+                {
+                    code = "InvalidEmailDomain",
+                    message = "Email must end with @framsikt.no"
+                });
+            }
+
             // Check if email exists in UserEmployee table
             var employee = context.UserEmployees.FirstOrDefault(e => e.Email == email);
             if (employee == null)
             {
-                return Results.BadRequest("Employee not found in UserEmployee table.");
+                //return Results.BadRequest("Employee not found in UserEmployee table.");
+                return Results.BadRequest(new
+                {
+                    code = "EmployeeNotFound",
+                    message = "Employee not found in UserEmployee table."
+                });
             }
 
             // Check if user already exists in AppUser table (AspNetUsers)
@@ -200,7 +220,12 @@ namespace TimeSnapBackend_MySql.Controllers
                 if (!createResult.Succeeded)
                 {
                     var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
-                    return Results.BadRequest($"User registration failed: {errors}");
+                    //return Results.BadRequest($"User registration failed: {errors}");
+                    return Results.BadRequest(new
+                    {
+                        code = "UserRegistrationFailed",
+                        message = $"User registration failed: {errors}"
+                    });
                 }
 
                 // Assign default role
@@ -224,9 +249,9 @@ namespace TimeSnapBackend_MySql.Controllers
 
             var claimsIdentity = new ClaimsIdentity(new[]
             {
-        new Claim("UserID", user.Id.ToString()),
-        new Claim(ClaimTypes.Role, roles.FirstOrDefault() ?? "Employee"),
-    });
+                new Claim("UserID", user.Id.ToString()),
+                new Claim(ClaimTypes.Role, roles.FirstOrDefault() ?? "Employee"),
+            });
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -474,16 +499,36 @@ namespace TimeSnapBackend_MySql.Controllers
 
                     var email = dto.Email.Trim().ToLower();
 
-                    var emp = await db.UserEmployees.FirstOrDefaultAsync(e => e.Email.ToLower() == email);
+                    // Check if email ends with @framsikt.no
+                    if (!email.EndsWith("@framsikt.no"))
+                    //return Results.BadRequest("Only email addresses ending with @framsikt.no are allowed.");
+                    return Results.BadRequest(new
+                    {
+                        Code = "InvalidEmailDomain",
+                        Message = "Only email addresses ending with @framsikt.no are allowed."
+                    });
+
+                var emp = await db.UserEmployees.FirstOrDefaultAsync(e => e.Email.ToLower() == email);
                     if (emp == null)
-                        return Results.BadRequest("You are not authorized to register.");
+                    //return Results.BadRequest("You are not authorized to register.");
+                    return Results.BadRequest(new
+                    {
+                        Code = "UnauthorizedEmail",
+                        Message = "You are not authorized to register."
+                    });
 
-                    var existingUser = await db.AppUsers.FirstOrDefaultAsync(u => u.Email.ToLower() == email);
+                var existingUser = await db.AppUsers.FirstOrDefaultAsync(u => u.Email.ToLower() == email);
                     if (existingUser != null)
-                        return Results.BadRequest("User already registered.");
+                    //return Results.BadRequest("User already registered.");
+                    return Results.BadRequest(new
+                    {
+                        Code = "UserAlreadyRegistered",
+                        Message = "User already registered."
+                    });
 
-                    // Reuse your existing SendOtp method
-                    var otpRequest = new OtpRequestModel { Email = dto.Email };
+
+                // Reuse your existing SendOtp method
+                var otpRequest = new OtpRequestModel { Email = dto.Email };
                     return await SendOtp(userManager, otpRequest, httpContextAccessor);
                 }
                 catch (Exception)
@@ -647,6 +692,15 @@ namespace TimeSnapBackend_MySql.Controllers
             {
                 return Results.BadRequest("HttpContext is null.");
             }
+
+            // Check if email ends with @framsikt.no
+            if (!request.Email!.EndsWith("@framsikt.no"))
+                //return Results.BadRequest("Only email addresses ending with @framsikt.no are allowed.");
+                return Results.BadRequest(new
+                {
+                    Code = "InvalidEmailDomain",
+                    Message = "Only email addresses ending with framsikt.no are allowed."
+                });
 
             // Check if user exists
             var user = await db.AppUsers.FirstOrDefaultAsync(u => u.Email.ToLower() == request.Email.ToLower());
